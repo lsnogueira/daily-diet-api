@@ -3,7 +3,6 @@ import z from 'zod';
 import { verifySessionId } from '../middlewares/verify-session-id';
 import { knex } from '../database';
 import { randomUUID } from 'node:crypto';
-import { request } from 'node:http';
 import { isSameUserMeal } from '../middlewares/is-same-user-meal';
 
 export async function mealsRoutes(app: FastifyInstance) {
@@ -128,19 +127,35 @@ export async function mealsRoutes(app: FastifyInstance) {
     if (!user) return reply.status(404).send('unauthorized');
     const userId = user.id;
 
-    const mealsQuantity = (
-      await knex('meals').select().where('user_id', userId)
-    ).length;
+    const meals = await knex('meals')
+      .select()
+      .where('user_id', userId)
+      .orderBy('date', 'asc');
     const mealsOnDietQuantity = (
-      await knex('meals').select().where({ user_id: userId, on_diet: true })
+      await knex('meals').select().where({
+        user_id: userId,
+        on_diet: true,
+      })
     ).length;
-    const mealsOutOfDietQuantity = mealsQuantity - mealsOnDietQuantity;
-    const mealsStreakInDiet = 0; // TODO: fazer essa parte (reduce?)
+
+    const mealsStreakInDiet = meals.reduce(
+      (result, meal) => {
+        if (meal.on_diet) {
+          result.current++;
+          result.max = Math.max(result.max, result.current);
+        } else {
+          result.current = 0;
+        }
+        return result;
+      },
+      { current: 0, max: 0 }
+    ).max;
 
     return reply.send({
-      mealsQuantity,
+      mealsQuantity: meals.length,
       mealsOnDietQuantity,
-      mealsOutOfDietQuantity,
+      mealsOutOfDietQuantity: meals.length - mealsOnDietQuantity,
+      mealsStreakInDiet,
     });
   });
 }
