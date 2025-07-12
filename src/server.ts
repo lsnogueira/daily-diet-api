@@ -1,7 +1,7 @@
 import fastify from 'fastify';
-import { usersRoutes } from './routes/users';
-import { env } from './env';
 import fastifyCookie from '@fastify/cookie';
+import { env } from './env';
+import { mealsRoutes, usersRoutes } from './routes';
 
 const app = fastify();
 
@@ -13,6 +13,10 @@ app.get('/health', (_, reply) => {
 
 app.register(usersRoutes, {
   prefix: '/users',
+});
+
+app.register(mealsRoutes, {
+  prefix: '/meals',
 });
 
 app
