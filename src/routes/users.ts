@@ -7,7 +7,7 @@ export async function usersRoutes(app: FastifyInstance) {
   app.post('/', async (request, reply) => {
     const createUserSchema = z.object({
       email: z.email(),
-      nome: z.string(),
+      name: z.string(),
     });
 
     const parseResult = createUserSchema.safeParse(request.body);
@@ -16,7 +16,7 @@ export async function usersRoutes(app: FastifyInstance) {
       return reply.status(400).send('Objeto inválido');
     }
 
-    const { email, nome } = parseResult.data;
+    const { email, name } = parseResult.data;
 
     const existingUser = await knex('users')
       .select('email')
@@ -30,8 +30,9 @@ export async function usersRoutes(app: FastifyInstance) {
     const session_id = randomUUID();
 
     await knex('users').insert({
+      id: randomUUID(),
       email,
-      nome,
+      name,
       session_id,
     });
 
