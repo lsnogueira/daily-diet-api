@@ -55,7 +55,7 @@ export async function usersRoutes(app: FastifyInstance) {
 
     const { email } = parseResult.data;
 
-    const user = knex('users').select('*').where('email', email).first();
+    const user = await knex('users').select('*').where('email', email).first();
 
     if (!user) {
       return reply.status(404).send('Usuário não encontrado');
